@@ -13,4 +13,4 @@ example : (a * b)⁻¹ = b⁻¹ * a⁻¹ := by group
 
 #check mul_left_cancel
 
-#check Hom
+#check MonoidHom
