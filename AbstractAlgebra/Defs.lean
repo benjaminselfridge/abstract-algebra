@@ -41,6 +41,9 @@ theorem mul_one (a : G) : a * 1 = a := by
        _     = 1 * a       := by rw [mul_inv_cancel]
        _     = a           := by rw [one_mul]
 
+theorem inv_one : (1 : G)⁻¹ = 1 := by
+  calc (1 : G)⁻¹ = 1 * 1⁻¹      := by rw [one_mul]
+       _         = 1            := by rw [mul_inv_cancel]
 
 theorem id_unique : (∀ x : G, a * x = 1) → a = 1 := by
   intro h
@@ -91,9 +94,11 @@ theorem hom_one (φ : G → H) (h : IsHom φ): φ 1 = 1 := by
   apply mul_left_cancel (φ 1)
   exact h'
 
-/-
 theorem hom_inv (φ : G → H) (h : IsHom φ) : φ a⁻¹ = (φ a)⁻¹ := by
--/
+  have h' : φ a * φ a⁻¹ = φ a * (φ a)⁻¹ := by
+    rw [mul_inv_cancel, ← h, mul_inv_cancel, hom_one φ h]
+  apply mul_left_cancel (φ a)
+  exact h'
 
 structure GroupAction (G:Type*) (A : Set G) [Group G] where
   apply : G → A → A
@@ -151,5 +156,6 @@ def kernel_subgroup (φ : G → H) (h : IsHom φ) : Subgroup G :=
   )
   (hom_one φ h)
   (by intro a h₁
-      sorry
+      calc φ a⁻¹ = (φ a)⁻¹ := by rw [hom_inv φ h]
+           _     = 1       := by rw [h₁, inv_one]
   )

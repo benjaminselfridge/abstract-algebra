@@ -1,14 +1,10 @@
-name = "lib"
+name = "abstract-algebra"
 version = "0.1.0"
-defaultTargets = ["lib"]
+defaultTargets = ["AbstractAlgebra"]
 
 [[lean_lib]]
-name = "Lib"
+name = "AbstractAlgebra"
 
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-
-[[lean_exe]]
-name = "lib"
-root = "Main"
