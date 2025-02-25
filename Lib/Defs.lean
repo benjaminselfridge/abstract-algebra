@@ -120,3 +120,12 @@ def Subgroup_of_subgroup_criterion {G} [Group G] (H : Set G)
     )
     sc.left
     inv_mem
+
+theorem subgroup_criterion_of_Subgroup {G} [Group G]
+  (Hₛ : Subgroup G) : subgroup_criterion (Hₛ.carrier) := by
+  constructor
+  . exact Hₛ.one_mem
+  . intro a b h
+    apply Hₛ.mul_mem
+    . apply Hₛ.inv_mem; exact h.left
+    . exact h.right
