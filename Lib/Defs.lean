@@ -86,6 +86,15 @@ variable {A B : Set α}
 
 def IsHom (φ : G → H) : Prop :=  ∀ a b : G, φ (a * b) = φ a * φ b
 
+theorem hom_one (φ : G → H) (h : IsHom φ): φ 1 = 1 := by
+  have h' : φ 1 * φ 1 = φ 1 * 1 := by rw [← h, mul_one, mul_one]
+  apply mul_left_cancel (φ 1)
+  exact h'
+
+/-
+theorem hom_inv (φ : G → H) (h : IsHom φ) : φ a⁻¹ = (φ a)⁻¹ := by
+-/
+
 structure GroupAction (G:Type*) (A : Set G) [Group G] where
   apply : G → A → A
   one_action (a : A) : apply 1 a = a
@@ -97,21 +106,21 @@ structure Subgroup (G:Type*) [Group G] where
   one_mem : 1 ∈ carrier
   inv_mem : ∀ a, a ∈ carrier → a⁻¹ ∈ carrier
 
-def subgroup_criterion {G} [Group G] (H : Set G) : Prop :=
-  (1 ∈ H) ∧
-  (∀ h₁ h₂ : G, h₁ ∈ H ∧ h₂ ∈ H → h₁⁻¹ * h₂ ∈ H)
+def subgroup_criterion {G} [Group G] (Hₛ : Set G) : Prop :=
+  (1 ∈ Hₛ) ∧
+  (∀ h₁ h₂ : G, h₁ ∈ Hₛ ∧ h₂ ∈ Hₛ → h₁⁻¹ * h₂ ∈ Hₛ)
 
-def Subgroup_of_subgroup_criterion {G} [Group G] (H : Set G)
-   (sc : subgroup_criterion H) : Subgroup G :=
-   have inv_mem : ∀ a : G, a ∈ H → a⁻¹ ∈ H := by
+def Subgroup_of_subgroup_criterion {G} [Group G] (Hₛ : Set G)
+   (sc : subgroup_criterion Hₛ) : Subgroup G :=
+   have inv_mem : ∀ a : G, a ∈ Hₛ → a⁻¹ ∈ Hₛ := by
      intro a h
      rw [← mul_one a⁻¹]
      apply sc.right
      exact ⟨h, sc.left⟩
    Subgroup.mk
-    H
+    Hₛ
     (by intros a b
-        show a ∈ H → b ∈ H → a * b ∈ H
+        show a ∈ Hₛ → b ∈ Hₛ → a * b ∈ Hₛ
         intros hp₁ hp₂
         have : a * b = a⁻¹⁻¹ * b := by rw [inv_inv]
         rw [this]
@@ -129,3 +138,18 @@ theorem subgroup_criterion_of_Subgroup {G} [Group G]
     apply Hₛ.mul_mem
     . apply Hₛ.inv_mem; exact h.left
     . exact h.right
+
+def kernel [Group G] [Group H] (φ : G → H) := {a : G | φ a = 1}
+
+def kernel_subgroup (φ : G → H) (h : IsHom φ) : Subgroup G :=
+  Subgroup.mk
+  { g : G | φ g = 1 }
+  ( by intro a b h₁ h₂
+       calc φ (a * b) = φ a * φ b := by apply h
+            _         = 1 * 1     := by rw [h₁, h₂]
+            _         = 1         := one_mul 1
+  )
+  (hom_one φ h)
+  (by intro a h₁
+      sorry
+  )
