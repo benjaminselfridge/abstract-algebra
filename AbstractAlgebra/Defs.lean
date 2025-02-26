@@ -5,6 +5,8 @@ import Mathlib.Data.Set.Basic
 
 namespace AbstractAlgebra
 
+-- TODO: Permutations
+
 class Group (G : Type u) extends Mul G, One G, Inv G where
 
   -- Group axioms
@@ -81,19 +83,24 @@ end Group
 
 variable {G H : Type u} [Group G] [Group H]
 
-variable {A B : Set α}
-
 def IsHom (φ : G → H) : Prop :=  ∀ a b : G, φ (a * b) = φ a * φ b
 
-theorem hom_one (φ : G → H) (h : IsHom φ): φ 1 = 1 := by
-  have h' : φ 1 * φ 1 = φ 1 * 1 := by rw [← h, mul_one, mul_one]
-  apply mul_left_cancel (φ 1)
+structure Hom (G H : Type*) [Group G] [Group H] where
+  map : G → H
+  map_mul_eq_mul_map : map (a * b) = map a * map b
+
+infixr:34 " ↠ "  => Hom
+
+theorem hom_one (φ : G ↠ H) : φ.map 1 = 1 := by
+  have h' : φ.map 1 * φ.map 1 = φ.map 1 * 1 := by
+    rw [← φ.map_mul_eq_mul_map, mul_one, mul_one]
+  apply mul_left_cancel (φ.map 1)
   exact h'
 
-theorem hom_inv (φ : G → H) (h : IsHom φ) : φ a⁻¹ = (φ a)⁻¹ := by
-  have h' : φ a * φ a⁻¹ = φ a * (φ a)⁻¹ := by
-    rw [mul_inv_cancel, ← h, mul_inv_cancel, hom_one φ h]
-  apply mul_left_cancel (φ a)
+theorem hom_inv (φ : G ↠ H) : φ.map a⁻¹ = (φ.map a)⁻¹ := by
+  have h' : φ.map a * φ.map a⁻¹ = φ.map a * (φ.map a)⁻¹ := by
+    rw [mul_inv_cancel, ← φ.map_mul_eq_mul_map, mul_inv_cancel, hom_one φ]
+  apply mul_left_cancel (φ.map a)
   exact h'
 
 structure GroupAction (G:Type*) (A : Set G) [Group G] where
@@ -116,6 +123,7 @@ def Subgroup_of_subgroup_criterion {G} [Group G] (Hₛ : Set G)
    (sc : subgroup_criterion Hₛ) : Subgroup G :=
    have inv_mem : ∀ a : G, a ∈ Hₛ → a⁻¹ ∈ Hₛ := by
      intro a h
+     show a⁻¹ ∈ Hₛ
      rw [← mul_one a⁻¹]
      apply sc.right
      exact ⟨h, sc.left⟩
@@ -145,18 +153,19 @@ theorem subgroup_criterion_of_Subgroup {G} [Group G]
 
 def kernel [Group G] [Group H] (φ : G → H) := {a : G | φ a = 1}
 
-def kernel_subgroup (φ : G → H) (h : IsHom φ) : Subgroup G :=
+def kernel_subgroup (φ : G ↠ H) : Subgroup G :=
   Subgroup.mk
-  { g : G | φ g = 1 }
+  { g : G | φ.map g = 1 }
   ( by  intro a b h₁ h₂
-        show φ (a * b) = 1
-        calc  φ (a * b) = φ a * φ b := by apply h
-              _         = 1 * 1     := by rw [h₁, h₂]
-              _         = 1         := one_mul 1
+        show φ.map (a * b) = 1
+        calc  φ.map (a * b) = φ.map a * φ.map b := by
+                apply φ.map_mul_eq_mul_map
+              _             = 1 * 1             := by rw [h₁, h₂]
+              _             = 1                 := one_mul 1
   )
-  ( show φ 1 = 1 from hom_one φ h )
+  ( show φ.map 1 = 1 from hom_one φ )
   ( by  intro a h₁
-        show φ a⁻¹ = 1
-        calc  φ a⁻¹ = (φ a)⁻¹ := by rw [hom_inv φ h]
-              _     = 1       := by rw [h₁, inv_one]
+        show φ.map a⁻¹ = 1
+        calc  φ.map a⁻¹ = (φ.map a)⁻¹ := by rw [hom_inv φ]
+              _         = 1           := by rw [h₁, inv_one]
   )
