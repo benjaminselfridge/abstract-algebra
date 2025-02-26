@@ -146,43 +146,6 @@ structure Subgroup (G:Type*) [Group G] where
   one_mem : 1 ∈ carrier
   inv_mem : ∀ a, a ∈ carrier → a⁻¹ ∈ carrier
 
-def subgroup_criterion {G} [Group G] (Hₛ : Set G) : Prop :=
-  (1 ∈ Hₛ) ∧
-  (∀ h₁ h₂ : G, h₁ ∈ Hₛ ∧ h₂ ∈ Hₛ → h₁⁻¹ * h₂ ∈ Hₛ)
-
--- Any set satisfying the subgroup criterion is a subgroup.
-def Subgroup_of_subgroup_criterion {G} [Group G] (Hₛ : Set G)
-   (sc : subgroup_criterion Hₛ) : Subgroup G :=
-   have inv_mem : ∀ a : G, a ∈ Hₛ → a⁻¹ ∈ Hₛ := by
-     intro a h
-     show a⁻¹ ∈ Hₛ
-     rw [← mul_one a⁻¹]
-     apply sc.right
-     exact ⟨h, sc.left⟩
-   Subgroup.mk
-    Hₛ
-    (by intros a b
-        show a ∈ Hₛ → b ∈ Hₛ → a * b ∈ Hₛ
-        intros hp₁ hp₂
-        have : a * b = a⁻¹⁻¹ * b := by rw [inv_inv]
-        rw [this]
-        apply sc.right
-        exact ⟨inv_mem a hp₁, hp₂⟩
-    )
-    sc.left
-    inv_mem
-
--- All subgroups satisfy the subgroup criterion.
-theorem subgroup_criterion_of_Subgroup {G} [Group G]
-  (Hₛ : Subgroup G) : subgroup_criterion Hₛ.carrier := by
-
-  constructor
-  . exact Hₛ.one_mem
-  . intro a b h
-    apply Hₛ.mul_mem
-    . apply Hₛ.inv_mem; exact h.left
-    . exact h.right
-
 def kernel [Group G] [Group H] (φ : G → H) := {a : G | φ a = 1}
 
 def kernel_subgroup (φ : G ↠ H) : Subgroup G :=
