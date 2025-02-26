@@ -9,7 +9,7 @@ Authors: Gabriel Ebner, Mario Carneiro
 `Zero` has already been defined in Lean.
 -/
 
-namespace Lib
+namespace AbstractAlgebra
 
 universe u
 
@@ -33,4 +33,4 @@ instance (priority := 20) One.instNonempty [One α] : Nonempty α :=
 theorem Subsingleton.eq_one [One α] [Subsingleton α] (a : α) : a = 1 :=
   Subsingleton.elim _ _
 
-end Lib
+end AbstractAlgebra

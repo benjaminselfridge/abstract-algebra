@@ -1,4 +1,4 @@
-namespace Lib
+namespace AbstractAlgebra
 /-- Class of types that have an inversion operation. -/
 
 class Inv (α : Type u) where
@@ -8,4 +8,4 @@ class Inv (α : Type u) where
 @[inherit_doc]
 postfix:max "⁻¹" => Inv.inv
 
-end Lib
+end AbstractAlgebra

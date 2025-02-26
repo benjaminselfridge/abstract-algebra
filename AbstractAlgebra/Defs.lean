@@ -1,13 +1,9 @@
 -- import Mathlib.Algebra.Group.Defs
-import Lib.One
-import Lib.Inv
+import AbstractAlgebra.One
+import AbstractAlgebra.Inv
 import Mathlib.Data.Set.Basic
 
 namespace AbstractAlgebra
-
-open Lib
-
-/- Minimal definition of a group -/
 
 class Group (G : Type u) extends Mul G, One G, Inv G where
 
@@ -115,6 +111,7 @@ def subgroup_criterion {G} [Group G] (Hₛ : Set G) : Prop :=
   (1 ∈ Hₛ) ∧
   (∀ h₁ h₂ : G, h₁ ∈ Hₛ ∧ h₂ ∈ Hₛ → h₁⁻¹ * h₂ ∈ Hₛ)
 
+-- Any set satisfying the subgroup criterion is a subgroup.
 def Subgroup_of_subgroup_criterion {G} [Group G] (Hₛ : Set G)
    (sc : subgroup_criterion Hₛ) : Subgroup G :=
    have inv_mem : ∀ a : G, a ∈ Hₛ → a⁻¹ ∈ Hₛ := by
@@ -135,8 +132,10 @@ def Subgroup_of_subgroup_criterion {G} [Group G] (Hₛ : Set G)
     sc.left
     inv_mem
 
+-- All subgroups satisfy the subgroup criterion.
 theorem subgroup_criterion_of_Subgroup {G} [Group G]
-  (Hₛ : Subgroup G) : subgroup_criterion (Hₛ.carrier) := by
+  (Hₛ : Subgroup G) : subgroup_criterion Hₛ.carrier := by
+
   constructor
   . exact Hₛ.one_mem
   . intro a b h
@@ -149,13 +148,15 @@ def kernel [Group G] [Group H] (φ : G → H) := {a : G | φ a = 1}
 def kernel_subgroup (φ : G → H) (h : IsHom φ) : Subgroup G :=
   Subgroup.mk
   { g : G | φ g = 1 }
-  ( by intro a b h₁ h₂
-       calc φ (a * b) = φ a * φ b := by apply h
-            _         = 1 * 1     := by rw [h₁, h₂]
-            _         = 1         := one_mul 1
+  ( by  intro a b h₁ h₂
+        show φ (a * b) = 1
+        calc  φ (a * b) = φ a * φ b := by apply h
+              _         = 1 * 1     := by rw [h₁, h₂]
+              _         = 1         := one_mul 1
   )
-  (hom_one φ h)
-  (by intro a h₁
-      calc φ a⁻¹ = (φ a)⁻¹ := by rw [hom_inv φ h]
-           _     = 1       := by rw [h₁, inv_one]
+  ( show φ 1 = 1 from hom_one φ h )
+  ( by  intro a h₁
+        show φ a⁻¹ = 1
+        calc  φ a⁻¹ = (φ a)⁻¹ := by rw [hom_inv φ h]
+              _     = 1       := by rw [h₁, inv_one]
   )
