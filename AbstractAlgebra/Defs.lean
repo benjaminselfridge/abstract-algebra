@@ -117,8 +117,6 @@ end Group
 
 variable {G H : Type u} [Group G] [Group H]
 
-def IsHom (φ : G → H) : Prop :=  ∀ a b : G, φ (a * b) = φ a * φ b
-
 structure Hom (G H : Type*) [Group G] [Group H] where
   map : G → H
   map_mul_eq_mul_map : map (a * b) = map a * map b
