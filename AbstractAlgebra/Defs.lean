@@ -2,10 +2,19 @@
 import AbstractAlgebra.One
 import AbstractAlgebra.Inv
 import Mathlib.Data.Set.Basic
+import Mathlib.Logic.Function.Defs
 
 namespace AbstractAlgebra
 
+section
+
+open Function
 -- TODO: Permutations
+structure Perm (α : Type u) where
+  map : α → α
+  map_bij : Bijective map
+
+end
 
 class Group (G : Type u) extends Mul G, One G, Inv G where
 
@@ -19,6 +28,31 @@ class Group (G : Type u) extends Mul G, One G, Inv G where
 
   -- 3. Inverse law
   inv_mul_cancel (a : G) : a⁻¹ * a = 1
+
+section
+open Function
+
+#check ∃! x : Int, true
+
+#check bijective_iff_existsUnique
+
+instance : Group (Perm α) where
+  mul σ τ := Perm.mk
+    (fun a => σ.map (τ.map a))
+    ( show Function.Bijective (fun a => σ.map (τ.map a)) from
+      by  apply (bijective_iff_existsUnique _).mpr
+          intro b
+          sorry
+    )
+  one := Perm.mk id bijective_id
+  inv σ := Perm.mk
+    _
+    _
+  mul_assoc := sorry
+  one_mul := sorry
+  inv_mul_cancel := sorry
+
+end
 
 open Group
 
