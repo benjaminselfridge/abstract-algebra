@@ -6,15 +6,11 @@ import Mathlib.Logic.Function.Defs
 
 namespace AbstractAlgebra
 
-section
-
-open Function
--- TODO: Permutations
 structure Perm (α : Type u) where
-  map : α → α
-  map_bij : Bijective map
-
-end
+  toFun : α → α
+  invFun : α → α
+  left_inv : invFun ∘ toFun = id
+  right_inv: toFun ∘ invFun = id
 
 class Group (G : Type u) extends Mul G, One G, Inv G where
 
@@ -30,30 +26,34 @@ class Group (G : Type u) extends Mul G, One G, Inv G where
   inv_mul_cancel (a : G) : a⁻¹ * a = 1
 
 section
-open Function
 
-#check ∃! x : Int, true
+#check funext
 
-#check bijective_iff_existsUnique
-
-instance : Group (Perm α) where
+instance: Group (Perm α) where
   mul σ τ := Perm.mk
-    (fun a => σ.map (τ.map a))
-    ( show Function.Bijective (fun a => σ.map (τ.map a)) from
-      by  apply (bijective_iff_existsUnique _).mpr
-          intro b
-          sorry
+    (σ.toFun ∘ τ.toFun)
+    (τ.invFun ∘ σ.invFun)
+    (by rw [Function.comp_assoc, ← Function.comp_assoc σ.invFun]
+        rw [σ.left_inv]
+        simp
+        rw [τ.left_inv]
     )
-  one := Perm.mk id bijective_id
-  inv σ := Perm.mk
-    _
-    _
-  mul_assoc := sorry
-  one_mul := sorry
-  inv_mul_cancel := sorry
-
-end
-
+    (by rw [Function.comp_assoc, ← Function.comp_assoc τ.toFun]
+        rw [τ.right_inv]
+        simp
+        rw [σ.right_inv]
+    )
+  one := Perm.mk id id rfl rfl
+  inv σ := Perm.mk σ.invFun σ.toFun σ.right_inv σ.left_inv
+  mul_assoc := by
+    intro a b c
+    simp [(· * ·)]
+    constructor <;> rfl
+  one_mul :=  by intro a; rfl
+  inv_mul_cancel := by
+    intro σ
+    simp [(· * ·), σ.left_inv]
+    rfl
 open Group
 
 namespace Group
