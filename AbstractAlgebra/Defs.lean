@@ -6,11 +6,8 @@ import Mathlib.Logic.Function.Defs
 
 namespace AbstractAlgebra
 
-structure Perm (α : Type u) where
-  toFun : α → α
-  invFun : α → α
-  left_inv : invFun ∘ toFun = id
-  right_inv: toFun ∘ invFun = id
+open One
+open Inv
 
 class Group (G : Type u) extends Mul G, One G, Inv G where
 
@@ -27,33 +24,18 @@ class Group (G : Type u) extends Mul G, One G, Inv G where
 
 section
 
-#check funext
+def npowRec [Mul G] [One G] (n : ℕ) (a : G) := match n with
+  | 0 => 1
+  | Nat.succ k => a * npowRec k a
+def npow [Group G] (n : ℕ) (a : G) : G := npowRec n a
+def npow_zero [Group G] (a : G) : npow 0 a = 1 := by
+  simp [npow, npowRec]
+def npow_succ [Group G] (n : ℕ) (a : G) : npow (n+1) a = a * npow n a := by
+  simp [npow, npowRec]
 
-instance: Group (Perm α) where
-  mul σ τ := Perm.mk
-    (σ.toFun ∘ τ.toFun)
-    (τ.invFun ∘ σ.invFun)
-    (by rw [Function.comp_assoc, ← Function.comp_assoc σ.invFun]
-        rw [σ.left_inv]
-        simp
-        rw [τ.left_inv]
-    )
-    (by rw [Function.comp_assoc, ← Function.comp_assoc τ.toFun]
-        rw [τ.right_inv]
-        simp
-        rw [σ.right_inv]
-    )
-  one := Perm.mk id id rfl rfl
-  inv σ := Perm.mk σ.invFun σ.toFun σ.right_inv σ.left_inv
-  mul_assoc := by
-    intro a b c
-    simp [(· * ·)]
-    constructor <;> rfl
-  one_mul :=  by intro a; rfl
-  inv_mul_cancel := by
-    intro σ
-    simp [(· * ·), σ.left_inv]
-    rfl
+instance Group.toNatPow [Group G] : NatPow G :=
+  ⟨fun n a => npow a n⟩
+
 open Group
 
 namespace Group
@@ -112,6 +94,7 @@ theorem mul_right_cancel : a * c = b * c → a = b := by
   calc a = a * c * c⁻¹ := by rw [mul_assoc, mul_inv_cancel, mul_one]
        _ = b * c * c⁻¹ := by rw [h]
        _ = b           := by rw [mul_assoc, mul_inv_cancel, mul_one]
+
 end
 end Group
 
@@ -134,11 +117,6 @@ theorem hom_inv (φ : G ↠ H) : φ.map a⁻¹ = (φ.map a)⁻¹ := by
     rw [mul_inv_cancel, ← φ.map_mul_eq_mul_map, mul_inv_cancel, hom_one φ]
   apply mul_left_cancel (φ.map a)
   exact h'
-
-structure GroupAction (G:Type*) (A : Set G) [Group G] where
-  apply : G → A → A
-  one_action (a : A) : apply 1 a = a
-  action_assoc (g₁ g₂ : G) (a : A) : apply g₁ (apply g₂ a) = apply (g₁ * g₂) a
 
 structure Subgroup (G:Type*) [Group G] where
   carrier : Set G
@@ -163,4 +141,67 @@ def kernel_subgroup (φ : G ↠ H) : Subgroup G :=
         show φ.map a⁻¹ = 1
         calc  φ.map a⁻¹ = (φ.map a)⁻¹ := by rw [hom_inv φ]
               _         = 1           := by rw [h₁, inv_one]
+  )
+
+structure GroupAction (G:Type*) (A : Set G) [Group G] where
+  apply : G → A → A
+  one_action (a : A) : apply 1 a = a
+  action_assoc (g₁ g₂ : G) (a : A) : apply g₁ (apply g₂ a) = apply (g₁ * g₂) a
+
+structure Perm (α : Type u) where
+  toFun : α → α
+  invFun : α → α
+  left_inv : invFun ∘ toFun = id
+  right_inv: toFun ∘ invFun = id
+
+instance: Group (Perm α) where
+  mul σ τ := Perm.mk
+    (σ.toFun ∘ τ.toFun)
+    (τ.invFun ∘ σ.invFun)
+    (by rw [Function.comp_assoc, ← Function.comp_assoc σ.invFun]
+        rw [σ.left_inv]
+        simp
+        rw [τ.left_inv]
+    )
+    (by rw [Function.comp_assoc, ← Function.comp_assoc τ.toFun]
+        rw [τ.right_inv]
+        simp
+        rw [σ.right_inv]
+    )
+  one := Perm.mk id id rfl rfl
+  inv σ := Perm.mk σ.invFun σ.toFun σ.right_inv σ.left_inv
+  mul_assoc := by
+    intro a b c
+    simp [(· * ·)]
+    constructor <;> rfl
+  one_mul :=  by intro a; rfl
+  inv_mul_cancel := by
+    intro σ
+    simp [(· * ·), σ.left_inv]
+    rfl
+
+/--
+  A group action is a homomorphism from G to Perm A.
+-/
+def groupActionHom (ρ : GroupAction G A) : G ↠ Perm A :=
+  Hom.mk
+  ( fun g => Perm.mk
+    (ρ.apply g)
+    (ρ.apply g⁻¹)
+    (by apply funext; intro a; simp
+        rw [ρ.action_assoc, inv_mul_cancel, ρ.one_action]
+    )
+    (by apply funext; intro a; simp
+        rw [ρ.action_assoc, mul_inv_cancel, ρ.one_action]
+    )
+  )
+  (by intro g₁ g₂
+      simp [(· * ·), Mul.mul]
+      constructor
+      . apply funext; intro a; simp
+        rw [ρ.action_assoc]
+        simp [(· * ·)]
+      . apply funext; intro a; simp
+        rw [ρ.action_assoc, ← mul_inv_rev]
+        simp [(· * ·)]
   )
