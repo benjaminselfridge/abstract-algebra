@@ -14,15 +14,24 @@ class Group (G : Type u) extends Mul G, One G, Inv G where
   -- Group axioms
 
   -- 1. Associativity of multiplication
-  mul_assoc (a b c : G) : a * b * c = a * (b * c)
+  protected mul_assoc (a b c : G) : a * b * c = a * (b * c)
 
   -- 2. Identity law
-  one_mul (a : G) : 1 * a = a
+  protected one_mul (a : G) : 1 * a = a
 
   -- 3. Inverse law
-  inv_mul_cancel (a : G) : a⁻¹ * a = 1
+  protected inv_mul_cancel (a : G) : a⁻¹ * a = 1
 
 section
+
+theorem mul_assoc [Group G] (a b c : G) : a * b * c = a * (b * c) :=
+  Group.mul_assoc a b c
+
+theorem one_mul [Group G] (a : G) : 1 * a = a :=
+  Group.one_mul a
+
+theorem inv_mul_cancel [Group G] (a : G) : a⁻¹ * a = 1 :=
+  Group.inv_mul_cancel a
 
 def npowRec [Mul G] [One G] (n : ℕ) (a : G) := match n with
   | 0 => 1
