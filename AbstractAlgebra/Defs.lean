@@ -132,9 +132,18 @@ theorem hom_inv (φ : G ↠ H) : φ.map a⁻¹ = (φ.map a)⁻¹ := by
 
 structure Subgroup (G:Type*) [Group G] where
   carrier : Set G
-  mul_mem : ∀ a b, a ∈ carrier → b ∈ carrier → a * b ∈ carrier
-  one_mem : 1 ∈ carrier
-  inv_mem : ∀ a, a ∈ carrier → a⁻¹ ∈ carrier
+  mul_mem' : ∀ a b, a ∈ carrier → b ∈ carrier → a * b ∈ carrier
+  one_mem' : 1 ∈ carrier
+  inv_mem' : ∀ a, a ∈ carrier → a⁻¹ ∈ carrier
+
+theorem mul_mem (H : Subgroup G) (a b : G) :
+  a ∈ H.carrier → b ∈ H.carrier → a * b ∈ H.carrier :=
+  H.mul_mem' a b
+
+theorem one_mem (H : Subgroup G) : 1 ∈ H.carrier := H.one_mem'
+
+theorem inv_mem (H : Subgroup G) (a : G) : a ∈ H.carrier → a⁻¹ ∈ H.carrier :=
+  H.inv_mem' a
 
 def kernel [Group G] [Group H] (φ : G → H) := {a : G | φ a = 1}
 
@@ -157,8 +166,8 @@ def kernel_subgroup (φ : G ↠ H) : Subgroup G :=
 
 structure GroupAction (G:Type*) (A : Set G) [Group G] where
   apply : G → A → A
-  one_action (a : A) : apply 1 a = a
-  action_assoc (g₁ g₂ : G) (a : A) : apply g₁ (apply g₂ a) = apply (g₁ * g₂) a
+  one_action' (a : A) : apply 1 a = a
+  action_assoc' (g₁ g₂ : G) (a : A) : apply g₁ (apply g₂ a) = apply (g₁ * g₂) a
 
 structure Perm (α : Type u) where
   toFun : α → α
