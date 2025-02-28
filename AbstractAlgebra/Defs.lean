@@ -111,19 +111,22 @@ variable {G H : Type u} [Group G] [Group H]
 
 structure Hom (G H : Type*) [Group G] [Group H] where
   map : G → H
-  map_mul_eq_mul_map : map (a * b) = map a * map b
+  map_mul_eq_mul_map' : map (a * b) = map a * map b
+
+theorem map_mul_eq_mul_map (φ : Hom G H): φ.map (a * b) = φ.map a * φ.map b :=
+  φ.map_mul_eq_mul_map'
 
 infixr:34 " ↠ "  => Hom
 
 theorem hom_one (φ : G ↠ H) : φ.map 1 = 1 := by
   have h' : φ.map 1 * φ.map 1 = φ.map 1 * 1 := by
-    rw [← φ.map_mul_eq_mul_map, mul_one, mul_one]
+    rw [← map_mul_eq_mul_map, mul_one, mul_one]
   apply mul_left_cancel (φ.map 1)
   exact h'
 
 theorem hom_inv (φ : G ↠ H) : φ.map a⁻¹ = (φ.map a)⁻¹ := by
   have h' : φ.map a * φ.map a⁻¹ = φ.map a * (φ.map a)⁻¹ := by
-    rw [mul_inv_cancel, ← φ.map_mul_eq_mul_map, mul_inv_cancel, hom_one φ]
+    rw [mul_inv_cancel, ← map_mul_eq_mul_map, mul_inv_cancel, hom_one φ]
   apply mul_left_cancel (φ.map a)
   exact h'
 
@@ -141,7 +144,7 @@ def kernel_subgroup (φ : G ↠ H) : Subgroup G :=
   ( by  intro a b h₁ h₂
         show φ.map (a * b) = 1
         calc  φ.map (a * b) = φ.map a * φ.map b := by
-                apply φ.map_mul_eq_mul_map
+                apply map_mul_eq_mul_map
               _             = 1 * 1             := by rw [h₁, h₂]
               _             = 1                 := one_mul 1
   )
@@ -194,7 +197,7 @@ instance: Group (Perm α) where
 -/
 def groupActionHom (ρ : GroupAction G A) : G ↠ Perm A :=
   Hom.mk
-  ( fun g => Perm.mk
+  (fun g => Perm.mk
     (ρ.apply g)
     (ρ.apply g⁻¹)
     (by apply funext; intro a; simp
