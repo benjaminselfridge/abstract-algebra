@@ -1,6 +1,5 @@
 import AbstractAlgebra.One
 import AbstractAlgebra.Inv
--- import AbstractAlgebra.Zero
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Rat.Defs
 import Mathlib.Data.Rat.Lemmas
@@ -13,6 +12,16 @@ namespace AbstractAlgebra
 open One
 open Inv
 
+/- Definition.
+
+(1) A *group* is an ordered pair (G, *) where G is a set and * is a binary operation on G satisfying the following axioms:
+
+  (i)   (a * b) * c = a * (b * c), for all a, b, c ∈ G, i. e., * is *associative*,
+  (ii)  there exists an element 1 in G, called an *identity* of G, such that for all a ∈ G
+        we have a * 1 = 1 * a = a,
+  (iii) for each a ∈ G there is an element a⁻¹ of G, called an *inverse* of a, such that a * a⁻¹ =
+        a⁻¹ * a = 1.
+-/
 class Group (G : Type u) extends Mul G, One G, Inv G where
 
   -- Group axioms
@@ -43,7 +52,22 @@ class AddGroup (G : Type u) extends Add G, Zero G, Neg G where
 
 section
 
-example : (-a : ℝ) + a = 0 := by exact neg_add_cancel a
+/-
+...
+
+(2) The group (G) is called *abelian* (or *commutative*) if a * b = b * a for all a, b ∈ G.
+-/
+
+class AbelianGroup (G: Type u) extends Group G where
+  protected mul_comm (a b : G) : a * b = b * a
+
+class AddAbelianGroup (G: Type u) extends AddGroup G where
+  protected add_com (a b : G) : a + b = b + a
+
+/- Examples
+(1) ℤ, ℚ, ℝ and ℂ are groups under + with 1 = 0 and a⁻¹ = -a, for all a.
+...
+-/
 
 instance: AddGroup ℤ where
   add_assoc := add_assoc
@@ -65,47 +89,71 @@ instance: AddGroup ℂ where
   zero_add := zero_add
   neg_add_cancel := neg_add_cancel
 
-class Nonzero (α : Type u) extends Zero α where
+/- [UNFINISHED]
+...
+
+(2) ℚ - {0}, R - {0}, C - {0}, ℚ+, ℝ+ are groups under * with 1 = 1 and a⁻¹ = 1/a, for all a.
+-/
+
+structure Nonzero (α : Type u) [Zero α] where
   protected elt : α
-  protected elt_is_nonzero : elt ≠ 0
+  protected elt_is_nonzero' : elt ≠ 0
 
-def ℚnz := Nonzero ℚ
+theorem elt_is_nonzero [Zero α] (x : Nonzero α) : x.elt ≠ 0 := x.elt_is_nonzero'
 
-theorem eq_ℚnz (a b : ℚnz) : a = b ↔ a.elt = b.elt := by
+theorem eq_nonzero [Zero α] (a b : Nonzero α) : a = b ↔ a.elt = b.elt := by
   constructor
   . intro h; rw [h]
   . intro h
-    calc a = ⟨a.elt, a.elt_is_nonzero⟩ := by rfl
-         _ = ⟨b.elt, b.elt_is_nonzero⟩ := by simp [h]
+    calc a = ⟨a.elt, a.elt_is_nonzero'⟩ := by rfl
+         _ = ⟨b.elt, b.elt_is_nonzero'⟩ := by simp [h]
          _ = b                         := by rfl
 
-instance: Mul ℚnz where
+instance instMulNonzero [Mul α] [Zero α] [NoZeroDivisors α]: Mul (Nonzero α) where
   mul x y :=
-    ℚnz.mk (x.elt * y.elt)
-      (by rw [mul_ne_zero_iff_right] <;> apply ℚnz.elt_is_nonzero)
+    Nonzero.mk
+      (x.elt * y.elt)
+      (by apply mul_ne_zero <;> apply elt_is_nonzero)
 
-instance: One ℚnz where
-  one := ⟨1, Ne.symm Rat.zero_ne_one⟩
+#check one_ne_zero
+#check NeZero
 
-instance: Inv ℚnz where
-  inv x := ℚnz.mk x.elt⁻¹
-    (by apply inv_ne_zero; exact x.elt_is_nonzero)
+instance instOneNonzero [Zero α] [One α] [NeZero (1:α)]: One (Nonzero α) where
+  one := ⟨1, one_ne_zero⟩
 
-instance: Group ℚnz where
+#check inv_ne_zero
+
+instance instInvNonzeroℚ : Inv (Nonzero ℚ) where
+  inv x := Nonzero.mk x.elt⁻¹ (inv_ne_zero (elt_is_nonzero x))
+
+instance : Group (Nonzero ℚ) where
   mul_assoc a b c := by
-    rw [eq_ℚnz]
+    rw [eq_nonzero]
     calc  (a * b * c).elt = (a * b).elt * c.elt := by rfl
           _               = a.elt * b.elt * c.elt := by rfl
           _               = a.elt * (b.elt * c.elt) := by apply Rat.mul_assoc
   one_mul a := by
-    rw [eq_ℚnz]
+    rw [eq_nonzero]
     calc  (1 * a).elt = 1 * a.elt := by rfl
           _           = a.elt := Rat.one_mul a.elt
   inv_mul_cancel a := by
-    rw [eq_ℚnz]
+    rw [eq_nonzero]
     calc  (a⁻¹ * a).elt = a⁻¹.elt * a.elt := by rfl
           _             = (a.elt)⁻¹ * a.elt := by rfl
-          _             = 1 := Rat.inv_mul_cancel a.elt a.elt_is_nonzero
+          _             = 1 := Rat.inv_mul_cancel a.elt (elt_is_nonzero a)
+
+instance : Mul (Nonzero ℝ) where
+  mul x y :=
+    Nonzero.mk
+      (x.elt * y.elt)
+      (by apply mul_ne_zero <;> apply elt_is_nonzero)
+
+instance: One (Nonzero ℝ) where
+  one := ⟨1, by simp [one_ne_zero]⟩
+
+noncomputable instance : Inv (Nonzero ℝ) where
+  inv x := Nonzero.mk x.elt⁻¹
+    (by apply inv_ne_zero; exact elt_is_nonzero x)
 
 instance [Inv G] [Inv H]: Inv (G × H) where
   inv p := ⟨p.fst⁻¹, p.snd⁻¹⟩
