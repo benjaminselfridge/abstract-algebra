@@ -1,5 +1,6 @@
 import AbstractAlgebra.One
 import AbstractAlgebra.Inv
+-- import AbstractAlgebra.Zero
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Rat.Defs
 import Mathlib.Data.Rat.Lemmas
@@ -64,14 +65,11 @@ instance: AddGroup ℂ where
   zero_add := zero_add
   neg_add_cancel := neg_add_cancel
 
-structure ℚnz where
-  elt : ℚ
-  elt_is_nonzero : elt ≠ 0
+class Nonzero (α : Type u) extends Zero α where
+  protected elt : α
+  protected elt_is_nonzero : elt ≠ 0
 
-#check ℚnz.elt_is_nonzero
-
-example : (1:ℚ) ≠ 0 := by apply?
-#check inv_ne_zero
+def ℚnz := Nonzero ℚ
 
 theorem eq_ℚnz (a b : ℚnz) : a = b ↔ a.elt = b.elt := by
   constructor
@@ -108,3 +106,20 @@ instance: Group ℚnz where
     calc  (a⁻¹ * a).elt = a⁻¹.elt * a.elt := by rfl
           _             = (a.elt)⁻¹ * a.elt := by rfl
           _             = 1 := Rat.inv_mul_cancel a.elt a.elt_is_nonzero
+
+instance [Inv G] [Inv H]: Inv (G × H) where
+  inv p := ⟨p.fst⁻¹, p.snd⁻¹⟩
+
+instance [Group G] [Group H]: Group (G × H) where
+  mul_assoc a b c := by
+    calc  a * b * c = ⟨(a.fst * b.fst) * c.fst, (a.snd * b.snd) * c.snd⟩ := by rfl
+          _         = ⟨a.fst * (b.fst * c.fst), a.snd * (b.snd * c.snd)⟩ := by
+            rw [Group.mul_assoc, Group.mul_assoc]
+          _         = a * (b * c) := by rfl
+  one_mul a := by
+    calc  1 * a = ⟨1 * a.fst, 1 * a.snd⟩ := by rfl
+          _     = ⟨a.fst, a.snd⟩ := by simp [Group.one_mul]
+          _     = a := by rfl
+  inv_mul_cancel a := by
+    calc  a⁻¹ * a = ⟨a.fst⁻¹ * a.fst, a.snd⁻¹ * a.snd⟩ := by rfl
+          _       = 1 := by simp [Group.inv_mul_cancel]

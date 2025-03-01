@@ -164,11 +164,6 @@ def kernel_subgroup (φ : G ↠ H) : Subgroup G :=
               _         = 1           := by rw [h₁, inv_one]
   )
 
-structure GroupAction (G:Type*) (A : Set G) [Group G] where
-  apply : G → A → A
-  one_action' (a : A) : apply 1 a = a
-  action_assoc' (g₁ g₂ : G) (a : A) : apply g₁ (apply g₂ a) = apply (g₁ * g₂) a
-
 structure Perm (α : Type u) where
   toFun : α → α
   invFun : α → α
@@ -201,6 +196,18 @@ instance: Group (Perm α) where
     simp [(· * ·), σ.left_inv]
     rfl
 
+structure GroupAction (G:Type*) (A : Set G) [Group G] where
+  apply : G → A → A
+  one_action' (a : A) : apply 1 a = a
+  action_assoc' (g₁ g₂ : G) (a : A) : apply g₁ (apply g₂ a) = apply (g₁ * g₂) a
+
+theorem one_action (ρ : GroupAction G A) : ρ.apply 1 a = a :=
+  ρ.one_action' a
+
+theorem action_assoc (ρ : GroupAction G A) (g₁ g₂ : G) (a : A) :
+  ρ.apply g₁ (ρ.apply g₂ a) = ρ.apply (g₁ * g₂) a :=
+  ρ.action_assoc' g₁ g₂ a
+
 /--
   A group action is a homomorphism from G to Perm A.
 -/
@@ -210,19 +217,19 @@ def groupActionHom (ρ : GroupAction G A) : G ↠ Perm A :=
     (ρ.apply g)
     (ρ.apply g⁻¹)
     (by apply funext; intro a; simp
-        rw [ρ.action_assoc, inv_mul_cancel, ρ.one_action]
+        rw [action_assoc, inv_mul_cancel, one_action]
     )
     (by apply funext; intro a; simp
-        rw [ρ.action_assoc, mul_inv_cancel, ρ.one_action]
+        rw [action_assoc, mul_inv_cancel, one_action]
     )
   )
   (by intro g₁ g₂
       simp [(· * ·), Mul.mul]
       constructor
       . apply funext; intro a; simp
-        rw [ρ.action_assoc]
+        rw [action_assoc]
         simp [(· * ·)]
       . apply funext; intro a; simp
-        rw [ρ.action_assoc, ← mul_inv_rev]
+        rw [action_assoc, ← mul_inv_rev]
         simp [(· * ·)]
   )
