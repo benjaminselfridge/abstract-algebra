@@ -37,6 +37,32 @@ class Group (G : Type u) extends Mul G, One G, Inv G where
 
 section
 
+variable {G H} [Group G] [Group H]
+
+theorem mul_assoc (a b c : G) : a * b * c = a * (b * c) :=
+  Group.mul_assoc a b c
+
+theorem one_mul (a : G) : 1 * a = a :=
+  Group.one_mul a
+
+theorem inv_mul_cancel (a : G) : a⁻¹ * a = 1 :=
+  Group.inv_mul_cancel a
+
+theorem mul_inv_cancel (a : G) : a * a⁻¹ = 1 := by
+  calc a * a⁻¹ = a⁻¹⁻¹ * a⁻¹ * a * a⁻¹ := by rw [inv_mul_cancel, one_mul]
+       _       = a⁻¹⁻¹ * a⁻¹           := by rw [mul_assoc a⁻¹⁻¹, inv_mul_cancel, mul_assoc, one_mul]
+       _       = 1                     := by rw [inv_mul_cancel]
+
+theorem mul_one (a : G) : a * 1 = a := by
+  calc a * 1 = a * a⁻¹ * a := by rw [mul_assoc, inv_mul_cancel]
+       _     = 1 * a       := by rw [mul_inv_cancel]
+       _     = a           := by rw [one_mul]
+
+lemma inv_one : (1 : G)⁻¹ = 1 := by
+  calc (1 : G)⁻¹ = 1 * (1 : G)⁻¹ := by rw [one_mul]
+       _         = 1             := by rw [mul_inv_cancel]
+
+
 class AddGroup (G : Type u) extends Add G, Zero G, Neg G where
 
   -- Group axioms
@@ -115,13 +141,8 @@ instance instMulNonzero [Mul α] [Zero α] [NoZeroDivisors α]: Mul (Nonzero α)
       (x.elt * y.elt)
       (by apply mul_ne_zero <;> apply elt_is_nonzero)
 
-#check one_ne_zero
-#check NeZero
-
 instance instOneNonzero [Zero α] [One α] [NeZero (1:α)]: One (Nonzero α) where
   one := ⟨1, one_ne_zero⟩
-
-#check inv_ne_zero
 
 instance instInvNonzeroℚ : Inv (Nonzero ℚ) where
   inv x := Nonzero.mk x.elt⁻¹ (inv_ne_zero (elt_is_nonzero x))
@@ -171,3 +192,33 @@ instance [Group G] [Group H]: Group (G × H) where
   inv_mul_cancel a := by
     calc  a⁻¹ * a = ⟨a.fst⁻¹ * a.fst, a.snd⁻¹ * a.snd⟩ := by rfl
           _       = 1 := by simp [Group.inv_mul_cancel]
+
+
+
+
+
+
+
+theorem id_unique : (∀ x : G, a * x = 1) → a = 1 := by
+  intro h
+  calc a = a * 1 := by rw [mul_one]
+       _ = 1     := by rw [h 1]
+
+theorem inv_unique (a b : G) : a * b = 1 → b = a⁻¹ := by
+  intro h
+  calc b = a⁻¹ * a * b := by rw [inv_mul_cancel, one_mul]
+       _ = a⁻¹ * 1     := by rw [mul_assoc, h]
+       _ = a⁻¹         := by rw [mul_one]
+
+theorem inv_inv (a : G) : a⁻¹⁻¹ = a := by
+  calc a⁻¹⁻¹ = a⁻¹⁻¹ * 1       := by rw [mul_one]
+       _     = a⁻¹⁻¹ * a⁻¹ * a := by rw [mul_assoc, inv_mul_cancel]
+       _     = 1 * a           := by rw [inv_mul_cancel]
+       _     = a               := by rw [one_mul]
+
+theorem mul_inv_rev (a b : G) : (a * b)⁻¹ = b⁻¹ * a⁻¹ := by
+  calc (a * b)⁻¹ = (a * b)⁻¹ * a * a⁻¹           := by rw [mul_assoc, mul_inv_cancel, mul_one]
+       _         = (a * b)⁻¹ * a * b * b⁻¹ * a⁻¹ := by rw [mul_assoc ((a * b)⁻¹ * a) b, mul_inv_cancel, mul_one];
+       _         = b⁻¹ * a⁻¹                     := by rw [mul_assoc (a*b)⁻¹, inv_mul_cancel, one_mul]
+
+-- Proposition 1.1.5 could sort of be demonstrated by doing a tactic.
