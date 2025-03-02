@@ -248,3 +248,49 @@ theorem mul_inv_rev (a b : G) : (a * b)⁻¹ = b⁻¹ * a⁻¹ := by
   ...
 -/
 -- [NOTE] Proposition 1.1.5 could sort of be demonstrated by doing a tactic.
+
+/- -- PROPOSITION 2. Let G be a groupa nd let a, b ∈ G. The equations ax = b and ya = b
+have unique solutions for x, y ∈ G. In particular, the left and right cancellation laws
+hold in G, i. e.
+  (1) if au = av, then u = v, and
+  (2) if ub = vb, then u = v.
+-/
+
+theorem mul_left_cancel (a b c : G) : a * b = a * c → b = c := by
+  intro h
+  calc b = a⁻¹ * a * b := by rw [inv_mul_cancel, one_mul]
+       _ = a⁻¹ * a * c := by rw [mul_assoc, h, ← mul_assoc]
+       _ = c           := by rw [inv_mul_cancel, one_mul]
+
+theorem mul_right_cancel (a b c : G) : a * c = b * c → a = b := by
+  intro h
+  calc a = a * c * c⁻¹ := by rw [mul_assoc, mul_inv_cancel, mul_one]
+       _ = b * c * c⁻¹ := by rw [h]
+       _ = b           := by rw [mul_assoc, mul_inv_cancel, mul_one]
+
+end
+
+-- [TBD]
+/- -- DEFINITION. For G a group and x ∈ G define the *order* of x to be the smallest positive
+integer n such that x^n = 1, and denote this integer by |x|. In this case x is said to be of
+order n. If no positive power of x is the identity, the order of x is defined to be infinity
+and x is said to be of infinite order.
+-/
+
+/-
+inductive Order {G} [Group G] (x : G) where
+  Fin : Order x
+-/
+
+-- [TBD]
+/- -- EXAMPLES (orders of group elements)
+-/
+
+-- [TBD]
+/- -- DEFINITION. Let G = {g₁, g₂, ..., gₙ} be a finite group with g₁ = 1. The
+*multiplication table* or *group table* of G is the n × n matrix whose i, j entry is the group
+element gᵢgⱼ.
+-/
+
+-- [TBD]
+/- -- EXERCISES -/
