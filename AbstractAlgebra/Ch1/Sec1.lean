@@ -12,7 +12,7 @@ namespace AbstractAlgebra
 open One
 open Inv
 
-/- Definition.
+/- -- DEFINITION.
 
 (1) A *group* is an ordered pair (G, *) where G is a set and * is a binary operation on G satisfying the following axioms:
 
@@ -21,10 +21,13 @@ open Inv
         we have a * 1 = 1 * a = a,
   (iii) for each a ∈ G there is an element a⁻¹ of G, called an *inverse* of a, such that a * a⁻¹ =
         a⁻¹ * a = 1.
+
+...
 -/
 class Group (G : Type u) extends Mul G, One G, Inv G where
 
   -- Group axioms
+  -- We only assume left identity and inverse; right identity and inverse can be derived as lemmas.
 
   -- 1. Associativity of multiplication
   protected mul_assoc (a b c : G) : a * b * c = a * (b * c)
@@ -39,21 +42,21 @@ section
 
 variable {G H} [Group G] [Group H]
 
-theorem mul_assoc (a b c : G) : a * b * c = a * (b * c) :=
+lemma mul_assoc (a b c : G) : a * b * c = a * (b * c) :=
   Group.mul_assoc a b c
 
-theorem one_mul (a : G) : 1 * a = a :=
+lemma one_mul (a : G) : 1 * a = a :=
   Group.one_mul a
 
-theorem inv_mul_cancel (a : G) : a⁻¹ * a = 1 :=
+lemma inv_mul_cancel (a : G) : a⁻¹ * a = 1 :=
   Group.inv_mul_cancel a
 
-theorem mul_inv_cancel (a : G) : a * a⁻¹ = 1 := by
+lemma mul_inv_cancel (a : G) : a * a⁻¹ = 1 := by
   calc a * a⁻¹ = a⁻¹⁻¹ * a⁻¹ * a * a⁻¹ := by rw [inv_mul_cancel, one_mul]
        _       = a⁻¹⁻¹ * a⁻¹           := by rw [mul_assoc a⁻¹⁻¹, inv_mul_cancel, mul_assoc, one_mul]
        _       = 1                     := by rw [inv_mul_cancel]
 
-theorem mul_one (a : G) : a * 1 = a := by
+lemma mul_one (a : G) : a * 1 = a := by
   calc a * 1 = a * a⁻¹ * a := by rw [mul_assoc, inv_mul_cancel]
        _     = 1 * a       := by rw [mul_inv_cancel]
        _     = a           := by rw [one_mul]
@@ -90,7 +93,7 @@ class AbelianGroup (G: Type u) extends Group G where
 class AddAbelianGroup (G: Type u) extends AddGroup G where
   protected add_com (a b : G) : a + b = b + a
 
-/- Examples
+/- -- EXAMPLES (of groups)
 (1) ℤ, ℚ, ℝ and ℂ are groups under + with 1 = 0 and a⁻¹ = -a, for all a.
 ...
 -/
@@ -125,15 +128,15 @@ structure Nonzero (α : Type u) [Zero α] where
   protected elt : α
   protected elt_is_nonzero' : elt ≠ 0
 
-theorem elt_is_nonzero [Zero α] (x : Nonzero α) : x.elt ≠ 0 := x.elt_is_nonzero'
+lemma elt_is_nonzero [Zero α] (x : Nonzero α) : x.elt ≠ 0 := x.elt_is_nonzero'
 
-theorem eq_nonzero [Zero α] (a b : Nonzero α) : a = b ↔ a.elt = b.elt := by
+lemma eq_nonzero [Zero α] (a b : Nonzero α) : a = b ↔ a.elt = b.elt := by
   constructor
   . intro h; rw [h]
   . intro h
     calc a = ⟨a.elt, a.elt_is_nonzero'⟩ := by rfl
          _ = ⟨b.elt, b.elt_is_nonzero'⟩ := by simp [h]
-         _ = b                         := by rfl
+         _ = b                          := by rfl
 
 instance instMulNonzero [Mul α] [Zero α] [NoZeroDivisors α]: Mul (Nonzero α) where
   mul x y :=
@@ -193,32 +196,55 @@ instance [Group G] [Group H]: Group (G × H) where
     calc  a⁻¹ * a = ⟨a.fst⁻¹ * a.fst, a.snd⁻¹ * a.snd⟩ := by rfl
           _       = 1 := by simp [Group.inv_mul_cancel]
 
+/- -- PROPOSITION 1.
 
+If G is a group under the operation *, then
 
-
-
-
+  (1) the identity of G is unique
+  ...
+-/
 
 theorem id_unique : (∀ x : G, a * x = 1) → a = 1 := by
   intro h
   calc a = a * 1 := by rw [mul_one]
        _ = 1     := by rw [h 1]
 
+/-
+  ...
+  (2) for each a ∈ G, a⁻¹ is uniquely determined
+  ...
+-/
 theorem inv_unique (a b : G) : a * b = 1 → b = a⁻¹ := by
   intro h
   calc b = a⁻¹ * a * b := by rw [inv_mul_cancel, one_mul]
        _ = a⁻¹ * 1     := by rw [mul_assoc, h]
        _ = a⁻¹         := by rw [mul_one]
 
+/-
+  ...
+  (3) (a⁻¹)⁻¹ = a for all a ∈ G
+  ...
+-/
 theorem inv_inv (a : G) : a⁻¹⁻¹ = a := by
   calc a⁻¹⁻¹ = a⁻¹⁻¹ * 1       := by rw [mul_one]
        _     = a⁻¹⁻¹ * a⁻¹ * a := by rw [mul_assoc, inv_mul_cancel]
        _     = 1 * a           := by rw [inv_mul_cancel]
        _     = a               := by rw [one_mul]
 
+/-
+  ...
+  (4) (a * b)⁻¹ = b⁻¹ * a⁻¹
+  ...
+-/
 theorem mul_inv_rev (a b : G) : (a * b)⁻¹ = b⁻¹ * a⁻¹ := by
   calc (a * b)⁻¹ = (a * b)⁻¹ * a * a⁻¹           := by rw [mul_assoc, mul_inv_cancel, mul_one]
        _         = (a * b)⁻¹ * a * b * b⁻¹ * a⁻¹ := by rw [mul_assoc ((a * b)⁻¹ * a) b, mul_inv_cancel, mul_one];
        _         = b⁻¹ * a⁻¹                     := by rw [mul_assoc (a*b)⁻¹, inv_mul_cancel, one_mul]
 
--- Proposition 1.1.5 could sort of be demonstrated by doing a tactic.
+/-
+  ...
+  (5) for any a₁, a₂, ..., aₙ ∈ G the value of a₁ * a₂ * ... * aₙ is independent of how
+      the expression is bracketed (this is called the *generalized associative law*).
+  ...
+-/
+-- [NOTE] Proposition 1.1.5 could sort of be demonstrated by doing a tactic.
